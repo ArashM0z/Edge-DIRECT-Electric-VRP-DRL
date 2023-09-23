@@ -1,46 +1,42 @@
-# EFECTIW-ROTER — Heterogeneous Fleet & Demand VRP with Time-Window Constraints
+# Edge-DIRECT — Heterogeneous Electric VRP with Time Windows via DRL
 
-> **Forked from [wouterkool/attention-learn-to-route](https://github.com/wouterkool/attention-learn-to-route)** (Kool et al., ICLR 2019). This repo implements the **EFECTIW-ROTER** architecture introduced in our ACM SIGSPATIAL 2024 paper.
+> **Forked from [wouterkool/attention-learn-to-route](https://github.com/wouterkool/attention-learn-to-route)** (Kool et al., ICLR 2019). This repo implements **Edge-DIRECT** introduced in our Canadian AI 2024 paper.
 
-[![Paper](https://img.shields.io/badge/ACM%20SIGSPATIAL-2024-blue)](https://doi.org/10.1145/3678717.3691208)
+[![Paper](https://img.shields.io/badge/Canadian%20AI-2024-blue)](https://caiac.pubpub.org/pub/vlg4rwhi)
+[![arXiv](https://img.shields.io/badge/arXiv-2407.01615-b31b1b)](https://arxiv.org/abs/2407.01615)
 [![Forked from](https://img.shields.io/badge/forked%20from-wouterkool/attention--learn--to--route-lightgrey)](https://github.com/wouterkool/attention-learn-to-route)
 
-## What EFECTIW-ROTER is
+## Edge-DIRECT in one line
 
-EFECTIW-ROTER = **spatial Edge-Feature EnhanCed mulTIgraph fusion encoder With spectral-based embedding and hieRarchical decOder with learnable TEmpoRal positional embedding**.
+**E**dge-enhanced **D**ual att**I**ntion enco**R**der and feature-**E**nhan**C**ed dual a**T**tention decoder.
 
-It solves the **Heterogeneous Fleet & Demand VRP with Time-Window Constraints (HFDVRPTW)** with DRL on top of the Kool 2019 Attention Model.
-
-## What this fork adds
+## What this fork adds on top of Kool 2019
 
 | File | What |
 |---|---|
-| `problems/hf_vrptw/graphs.py` | Two sparse graphs: TW-feasibility `G_tw` and demand-vehicle compatibility `G_dv` |
-| `problems/hf_vrptw/spectral_embedding.py` | Bottom-k Laplacian eigenvectors as per-node spectral features |
-| `nets/efectiw/spatial_encoder.py` | Spatial-Edge-Feature graph Transformer (attention bias from travel-time edges, masked by `G_tw`) |
-| `nets/efectiw/temporal_encoder.py` | Temporal Graph Transformer with **learnable temporal positional embedding** (rank by `tw_start`), masked by `G_dv` |
-| `nets/efectiw/fusion_encoder.py` | Multigraph fusion: gated combination of spatial + temporal + spectral |
-| `nets/efectiw/hierarchical_decoder.py` | Hierarchical decoder: vehicle-type selector then node selector |
-| `nets/efectiw/efectiw_model.py` | Full agent composing all four modules above |
+| `problems/evrptw/graphs.py` | The **extra graph representation** — adjacency from time-window overlap between customers |
+| `problems/evrptw/charging.py` | Non-linear CC + CV charging model + energy-consumption helper |
+| `nets/edge_direct/dual_attention_encoder.py` | **Dual-attention encoder** layered as (spatial-edge attention + energy-edge attention) per layer, gated + merged |
+| `nets/edge_direct/dual_attention_decoder.py` | **Feature-enhanced dual decoder**: vehicle-type head + node head with SOC / capacity / time context |
+| `nets/edge_direct/edge_direct_model.py` | Full agent composing the encoder + decoder |
+| `README.md` | This file |
 
-The Kool 2019 training loop, REINFORCE rollout baseline, and `run.py` entry point are unchanged.
+The encoder is "edge-enhanced" because every attention block carries one spatial-edge bias (travel-time) and one energy-edge bias. The decoder is "feature-enhanced" because its context vector includes SOC and remaining capacity, beyond the usual last-node / graph embedding.
 
 ## Run
 
 ```bash
-python run.py --problem hf_vrptw --graph_size 50 --baseline rollout --run_name efectiw-n50
+python run.py --problem evrptw --graph_size 30 --baseline rollout --run_name edge-direct-n30
 ```
 
 ## Citation
 
 ```bibtex
-@inproceedings{mozhdehi2024efectiwroter,
-  title={{EFECTIW-ROTER}: Deep Reinforcement Learning Approach for Solving Heterogeneous Fleet and Demand VRP With Time-Window Constraints},
-  author={Mozhdehi, Arash and Mohammadizadeh, Mahdi and Wang, Yunli and Sun, Sun and Wang, Xin},
-  booktitle={ACM SIGSPATIAL 2024},
-  pages={17--28},
-  year={2024},
-  doi={10.1145/3678717.3691208}
+@inproceedings{mozhdehi2024edgedirect,
+  title={{Edge-DIRECT}: A Deep Reinforcement Learning-based Method for Solving Heterogeneous Electric VRP with Time Window Constraints},
+  author={Mozhdehi, Arash and Mohammadizadeh, Mahdi and Wang, Xin},
+  booktitle={Canadian Conference on Artificial Intelligence},
+  year={2024}
 }
 @inproceedings{kool2019attention,
   title={Attention, Learn to Solve Routing Problems!},

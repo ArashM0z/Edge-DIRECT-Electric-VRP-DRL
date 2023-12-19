@@ -233,3 +233,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
 <!-- iter 2023-12-18-17 -->
 
 <!-- iter 2023-12-18-19 -->
+
+<!-- iter 2023-12-18-21 -->

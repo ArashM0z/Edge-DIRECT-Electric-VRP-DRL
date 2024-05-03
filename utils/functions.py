@@ -207,3 +207,16 @@ def sample_many(inner_func, get_cost_func, input, batch_rep=1, iter_rep=1):
     minpis = pis[torch.arange(pis.size(0), out=argmincosts.new()), argmincosts]
 
     return minpis, mincosts
+
+
+from problems.mttdvrp.problem_mttdvrp import MTTDVRP
+# Kool framework convention: the problem class is discovered by NAME.
+PROBLEM_REGISTRY = {
+    "tsp": "problems.tsp.problem_tsp.TSP",
+    "cvrp": "problems.vrp.problem_vrp.CVRP",
+    "sdvrp": "problems.vrp.problem_vrp.SDVRP",
+    "op": "problems.op.problem_op.OP",
+    "pctsp_det": "problems.pctsp.problem_pctsp.PCTSPDet",
+    "pctsp_stoch": "problems.pctsp.problem_pctsp.PCTSPStoch",
+    "mttdvrp": "problems.mttdvrp.problem_mttdvrp.MTTDVRP",
+}

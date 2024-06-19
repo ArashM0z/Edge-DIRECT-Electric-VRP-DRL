@@ -1,0 +1,11 @@
+problem: hf_vrptw
+graph_size: 20
+embed_dim: 128
+n_heads: 8
+n_encoder_layers: 3
+n_vehicle_types: 4
+k_spectral: 8
+batch_size: 256
+epochs: 30
+lr: 1.0e-4
+baseline: rollout

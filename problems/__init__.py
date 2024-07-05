@@ -3,3 +3,4 @@ from problems.vrp.problem_vrp import CVRP, SDVRP
 from problems.op.problem_op import OP
 from problems.pctsp.problem_pctsp import PCTSPDet, PCTSPStoch
 from problems.mttdvrp.problem_mttdvrp import MTTDVRP
+from problems.hf_vrptw.problem_hf_vrptw import HFVRPTW

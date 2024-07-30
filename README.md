@@ -665,3 +665,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
 <!-- m 2023-04-12T22:26:00-06:00 -->
 
 <!-- burst 2024-07-30 #1 -->
+
+<!-- burst 2024-07-30 #2 -->

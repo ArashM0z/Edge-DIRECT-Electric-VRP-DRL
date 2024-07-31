@@ -701,3 +701,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
 <!-- burst 2024-07-30 #18 -->
 
 <!-- burst 2024-07-30 #19 -->
+
+<!-- burst 2024-07-30 #20 -->

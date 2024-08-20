@@ -1,52 +1,46 @@
-# SED2AM — Multi-Trip Time-Dependent VRP via Deep RL
+# EFECTIW-ROTER — Heterogeneous Fleet VRP with Time Windows via Deep RL
 
-> **Forked from [wouterkool/attention-learn-to-route](https://github.com/wouterkool/attention-learn-to-route)** (Kool et al., ICLR 2019). This repo adds the **multi-trip time-dependent VRP** variant introduced in our ACM TKDD 2025 paper.
+> **Forked from [wouterkool/attention-learn-to-route](https://github.com/wouterkool/attention-learn-to-route)** (Kool et al., ICLR 2019). This repo adds the **heterogeneous-fleet VRP with time windows** variant introduced in our ACM SIGSPATIAL 2024 paper.
 
-[![Paper](https://img.shields.io/badge/ACM%20TKDD-2025-blue)](https://doi.org/10.1145/3721983)
+[![Paper](https://img.shields.io/badge/ACM%20SIGSPATIAL-2024-blue)](https://doi.org/10.1145/3678717.3691208)
 [![Forked from](https://img.shields.io/badge/forked%20from-wouterkool/attention--learn--to--route-lightgrey)](https://github.com/wouterkool/attention-learn-to-route)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## What this fork adds
 
-The Kool 2019 codebase ships with `tsp`, `cvrp`, `sdvrp`, `op`, `pctsp_det`, `pctsp_stoch` problem definitions. This fork adds **`mttdvrp`** — a new problem registered through the same conventions:
+The Kool 2019 codebase covers `tsp`, `cvrp`, `sdvrp`, `op`, `pctsp_det`, `pctsp_stoch`. This fork adds **`hf_vrptw`**:
 
-| File | Status | What it does |
+| File | Status | What |
 |---|---|---|
-| `problems/mttdvrp/problem_mttdvrp.py` | new | MTTDVRP problem with vectorised piecewise-linear time-dependent travel-time cost |
-| `problems/mttdvrp/state_mttdvrp.py`  | new | State container tracking `current_time` and the multi-trip-aware feasibility mask |
-| `problems/__init__.py`               | patch | Register `MTTDVRP` in the problem registry |
-| `options.py`                         | patch | Add `mttdvrp` to the `--problem` help string |
-| `utils/functions.py`                 | patch | Add the `mttdvrp` entry to `PROBLEM_REGISTRY` |
-| `README.md`                          | rewritten | This file |
+| `problems/hf_vrptw/problem_hf_vrptw.py` | new | HF-VRPTW problem with per-vehicle cost-per-km, fixed costs, and TW slack penalty |
+| `problems/hf_vrptw/state_hf_vrptw.py` | new | State container tracking `arrival_t` and per-vehicle capacity |
+| `problems/__init__.py` | patch | Register `HFVRPTW` |
+| `options.py` | patch | Add `hf_vrptw` to the `--problem` help string |
+| `README.md` | rewritten | This file |
 
-Everything else — the attention encoder, the pointer decoder, REINFORCE with rollout baseline, the run/train scripts — is **unchanged** from Kool 2019.
+The encoder, decoder, REINFORCE training loop, and run script are **unchanged** from Kool 2019.
 
-## Two modifications, end to end
+## Two modifications
 
-1. **Multi-trip**: a vehicle may visit the depot mid-tour, refilling its capacity and continuing to serve customers. Kool's `pi` tour representation already encodes depot returns; the change is in how cost and the feasibility mask are computed.
-2. **Time-dependent travel**: travel time between any two nodes is the integral of distance over a piecewise-linear speed profile *starting at the leg's departure time*. Each instance carries its own profile (breakpoints + per-segment speeds).
-
-Both modifications are in the new `problems/mttdvrp/` directory. The training loop is unchanged.
+1. **Heterogeneous fleet**: a fleet of four vehicle types (capacity, cost-per-km, fixed cost) parameterised in `VEHICLE_FLEET`. Each instance is pre-assigned a vehicle type; the cost function applies the corresponding per-km and fixed costs.
+2. **Hard time windows**: every customer carries `[tw_start, tw_end]`. Arrivals wait until `tw_start`, and a per-minute slack penalty is added to the cost for arrivals after `tw_end`. Service takes 10 minutes.
 
 ## Run
 
 ```bash
-python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name sed2am-n50
+python run.py --problem hf_vrptw --graph_size 50 --baseline rollout --run_name efectiw-n50
 ```
-
-CLI flags inherit from the Kool framework: see `options.py`.
 
 ## Citation
 
-If you use this fork, please cite both the Kool 2019 base and our paper:
-
 ```bibtex
-@article{mozhdehi2025sed2am,
-  title={{SED2AM}: Solving Multi-Trip Time-Dependent Vehicle Routing Problem Using Deep Reinforcement Learning},
-  author={Mozhdehi, Arash and Wang, Yunli and Sun, Sun and Wang, Xin},
-  journal={ACM Transactions on Knowledge Discovery from Data},
-  year={2025},
-  doi={10.1145/3721983}
+@inproceedings{mozhdehi2024efectiwroter,
+  title={{EFECTIW-ROTER}: Deep Reinforcement Learning Approach for Solving Heterogeneous Fleet and Demand VRP With Time-Window Constraints},
+  author={Mozhdehi, Arash and Mohammadizadeh, Mahdi and Wang, Yunli and Sun, Sun and Wang, Xin},
+  booktitle={ACM SIGSPATIAL 2024},
+  pages={17--28},
+  year={2024},
+  doi={10.1145/3678717.3691208}
 }
 @inproceedings{kool2019attention,
   title={Attention, Learn to Solve Routing Problems!},
@@ -55,7 +49,3 @@ If you use this fork, please cite both the Kool 2019 base and our paper:
   year={2019}
 }
 ```
-
-## License
-
-MIT, inheriting from the Kool 2019 base.

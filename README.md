@@ -1,42 +1,41 @@
-# Edge-DIRECT — Heterogeneous Electric VRP with Time Windows via DRL
+# SP-DE — Multi-Depot VRP with Inter-Depot Routes via Multi-Agent DRL
 
-> **Forked from [wouterkool/attention-learn-to-route](https://github.com/wouterkool/attention-learn-to-route)** (Kool et al., ICLR 2019). This repo implements **Edge-DIRECT** introduced in our Canadian AI 2024 paper.
+> **Forked from [wouterkool/attention-learn-to-route](https://github.com/wouterkool/attention-learn-to-route)** (Kool et al., ICLR 2019). This repo implements **SP-DE** (Single Policy, Distributed Execution) introduced in our Canadian AI 2025 paper.
 
-[![Paper](https://img.shields.io/badge/Canadian%20AI-2024-blue)](https://caiac.pubpub.org/pub/vlg4rwhi)
-[![arXiv](https://img.shields.io/badge/arXiv-2407.01615-b31b1b)](https://arxiv.org/abs/2407.01615)
+[![Paper](https://img.shields.io/badge/Canadian%20AI-2025-blue)](https://caiac.pubpub.org/pub/w0os5i18)
 [![Forked from](https://img.shields.io/badge/forked%20from-wouterkool/attention--learn--to--route-lightgrey)](https://github.com/wouterkool/attention-learn-to-route)
 
-## Edge-DIRECT in one line
+## What SP-DE is
 
-**E**dge-enhanced **D**ual att**I**ntion enco**R**der and feature-**E**nhan**C**ed dual a**T**tention decoder.
+SP-DE solves the **Multi-Depot Vehicle Routing Problem with Inter-Depot Routes (MDVRP-IDR)** — vehicles start at one of K depots, serve customers, and may return to *any* depot mid-tour to refill capacity. This is genuinely multi-agent: one actor per depot, coordinated through a centralised critic, but executing in parallel at inference.
+
+The CTDE (centralised training, decentralised execution) pattern is the multi-agent RL standard. The encoder is shared; each depot has its own actor head with its own attention parameters; the critic is centralised and computes joint values.
 
 ## What this fork adds on top of Kool 2019
 
 | File | What |
 |---|---|
-| `problems/evrptw/graphs.py` | The **extra graph representation** — adjacency from time-window overlap between customers |
-| `problems/evrptw/charging.py` | Non-linear CC + CV charging model + energy-consumption helper |
-| `nets/edge_direct/dual_attention_encoder.py` | **Dual-attention encoder** layered as (spatial-edge attention + energy-edge attention) per layer, gated + merged |
-| `nets/edge_direct/dual_attention_decoder.py` | **Feature-enhanced dual decoder**: vehicle-type head + node head with SOC / capacity / time context |
-| `nets/edge_direct/edge_direct_model.py` | Full agent composing the encoder + decoder |
-| `README.md` | This file |
-
-The encoder is "edge-enhanced" because every attention block carries one spatial-edge bias (travel-time) and one energy-edge bias. The decoder is "feature-enhanced" because its context vector includes SOC and remaining capacity, beyond the usual last-node / graph embedding.
+| `problems/mdvrp_idr/problem_mdvrp_idr.py` | MDVRP-IDR problem definition with multi-depot inputs |
+| `problems/mdvrp_idr/state_mdvrp_idr.py` | State tracking per-vehicle (depot, location, capacity) + customer-visited mask |
+| `nets/spde/shared_encoder.py` | Shared Transformer encoder over (depot + customer) graph |
+| `nets/spde/per_depot_actor.py` | Per-depot actor (one PointerDecoder per depot) |
+| `nets/spde/centralised_critic.py` | Attention-based centralised critic over joint agent embeddings |
+| `nets/spde/spde_model.py` | Full SP-DE agent |
 
 ## Run
 
 ```bash
-python run.py --problem evrptw --graph_size 30 --baseline rollout --run_name edge-direct-n30
+python run.py --problem mdvrp_idr --graph_size 50 --n_depots 3 --baseline rollout --run_name spde-n50
 ```
 
 ## Citation
 
 ```bibtex
-@inproceedings{mozhdehi2024edgedirect,
-  title={{Edge-DIRECT}: A Deep Reinforcement Learning-based Method for Solving Heterogeneous Electric VRP with Time Window Constraints},
-  author={Mozhdehi, Arash and Mohammadizadeh, Mahdi and Wang, Xin},
+@inproceedings{mozhdehi2025spde,
+  title={{SP$\spadesuit$DE}: Solving the Multi-Depot Vehicle Routing Problem with Inter-Depot Routes Using Multi-Agent Deep Reinforcement Learning},
+  author={Mozhdehi, Arash and Mohammadizadeh, Mahdi and Kalantari, Saeid and Kim, Beom Sae and Wang, Xin},
   booktitle={Canadian Conference on Artificial Intelligence},
-  year={2024}
+  year={2025}
 }
 @inproceedings{kool2019attention,
   title={Attention, Learn to Solve Routing Problems!},

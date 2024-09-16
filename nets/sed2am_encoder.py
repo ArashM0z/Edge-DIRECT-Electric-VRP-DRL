@@ -143,3 +143,5 @@ class SED2AMSimultaneousEncoder(nn.Module):
                 h = layer(h, h_edge)
             per_interval.append(h)
         return torch.stack(per_interval, dim=1)  # (B, P, N, D)
+
+# encoder revised 2024-09-15

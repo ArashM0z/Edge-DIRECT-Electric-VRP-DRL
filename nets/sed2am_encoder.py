@@ -145,3 +145,5 @@ class SED2AMSimultaneousEncoder(nn.Module):
         return torch.stack(per_interval, dim=1)  # (B, P, N, D)
 
 # encoder revised 2024-09-15
+
+# self-loop guard added 2024-09-18

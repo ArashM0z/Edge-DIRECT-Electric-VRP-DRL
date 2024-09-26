@@ -149,3 +149,5 @@ class SED2AMSimultaneousEncoder(nn.Module):
 # self-loop guard added 2024-09-18
 
 # §4.2 annotations 2024-09-22
+
+# preallocation note 2024-09-25

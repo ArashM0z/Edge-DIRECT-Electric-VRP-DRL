@@ -299,3 +299,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
 <!-- iter 2024-09-30-09 -->
 
 <!-- iter 2024-09-30-11 -->
+
+<!-- iter 2024-09-30-13 -->

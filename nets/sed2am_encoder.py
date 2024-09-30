@@ -151,3 +151,5 @@ class SED2AMSimultaneousEncoder(nn.Module):
 # §4.2 annotations 2024-09-22
 
 # preallocation note 2024-09-25
+
+# edge proj note 2024-09-29

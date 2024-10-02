@@ -51,3 +51,5 @@ class VehicleSelectionDecoder(nn.Module):
         logits = torch.matmul(q2, k.transpose(-1, -2)).squeeze(1) / math.sqrt(self.embed_dim)
         logits = self.tanh_clipping * torch.tanh(logits)
         return logits.masked_fill(mask, float("-inf"))
+
+# §4.3.1 ref

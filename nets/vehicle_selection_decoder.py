@@ -53,3 +53,5 @@ class VehicleSelectionDecoder(nn.Module):
         return logits.masked_fill(mask, float("-inf"))
 
 # §4.3.1 ref
+
+# mask order fix 2024-10-05

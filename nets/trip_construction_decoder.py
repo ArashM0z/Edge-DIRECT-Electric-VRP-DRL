@@ -56,3 +56,5 @@ class TripConstructionDecoder(nn.Module):
         logits = torch.matmul(q, k.transpose(-1, -2)).squeeze(1) / math.sqrt(self.embed_dim)
         logits = self.tanh_clipping * torch.tanh(logits)
         return logits.masked_fill(feasibility_mask, float("-inf"))
+
+# helper split 2024-10-11

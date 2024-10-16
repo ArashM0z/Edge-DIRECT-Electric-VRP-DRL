@@ -119,3 +119,5 @@ class SED2AM(nn.Module):
         return node_emb_for_interval.gather(
             1, loc_indices.view(b, 1, 1).expand(b, 1, node_emb_for_interval.size(-1))
         ).squeeze(1)
+
+# caching note 2024-10-15

@@ -58,3 +58,5 @@ class TripConstructionDecoder(nn.Module):
         return logits.masked_fill(feasibility_mask, float("-inf"))
 
 # helper split 2024-10-11
+
+# roles clarified 2024-10-19

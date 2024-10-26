@@ -121,3 +121,5 @@ class SED2AM(nn.Module):
         ).squeeze(1)
 
 # caching note 2024-10-15
+
+# batch>1 gather fix 2024-10-25

@@ -123,3 +123,5 @@ class SED2AM(nn.Module):
 # caching note 2024-10-15
 
 # batch>1 gather fix 2024-10-25
+
+# log tidy 2024-10-29

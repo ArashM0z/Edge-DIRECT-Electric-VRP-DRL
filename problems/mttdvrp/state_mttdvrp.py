@@ -168,3 +168,5 @@ class StateMTTDVRP(NamedTuple):
 
     def total_cost(self) -> Tensor:
         return self.cost_accum
+
+# τ clamp 2024-11-02

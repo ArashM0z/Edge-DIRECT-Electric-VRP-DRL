@@ -170,3 +170,5 @@ class StateMTTDVRP(NamedTuple):
         return self.cost_accum
 
 # τ clamp 2024-11-02
+
+# interval vectorisation 2024-11-08

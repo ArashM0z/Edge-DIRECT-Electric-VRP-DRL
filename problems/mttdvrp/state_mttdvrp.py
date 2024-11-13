@@ -172,3 +172,5 @@ class StateMTTDVRP(NamedTuple):
 # τ clamp 2024-11-02
 
 # interval vectorisation 2024-11-08
+
+# §3.3 numbering

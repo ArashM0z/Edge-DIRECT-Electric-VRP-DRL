@@ -115,3 +115,5 @@ class MTTDVRPDataset(Dataset):
 
     def __getitem__(self, idx: int) -> dict[str, Tensor]:
         return self.data[idx]
+
+# depot demand fix 2024-11-15

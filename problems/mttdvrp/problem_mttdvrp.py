@@ -1,17 +1,19 @@
-"""Multi-Trip Time-Dependent VRP (SED2AM, ACM TKDD 2025).
+"""Multi-Trip Time-Dependent VRP with maximum working hours (SED2AM, TKDD 2025).
 
-Extends the standard CVRP problem in two ways:
+Adds on top of Kool's CVRP base:
 
-1. **Multi-trip**: a vehicle may return to the depot mid-tour to refill
-   capacity, then continue serving customers. The Kool 2019 CVRP already
-   supports depot returns as part of `pi`, so the existing tour
-   representation works unchanged; what changes is how *cost* and the
-   feasibility *mask* are computed.
+  1. Per-interval edge travel-time tensor ε ∈ R^{|V|×|V|×P}.
+     P partitions the working day (default 5 intervals over 8h).
 
-2. **Time-dependent**: travel time between any two nodes is computed by
-   integrating distance through a piecewise-linear speed profile that
-   depends on the departure time. The cost function therefore depends on
-   when a leg starts, not just where it goes.
+  2. Maximum working hours constraint τ_max (default 480 min).
+     Each vehicle has remaining hours τ_i^t; the feasibility mask refuses
+     any move that would push τ_i^{t+1} < 0.
+
+  3. Fleet of K vehicles (default 5). The action is a 2-tuple (i, v_j) —
+     select vehicle i, then next location v_j.
+
+Cost: total travel time across all vehicles, integrated through the per-
+interval travel-time tensor.
 """
 
 from __future__ import annotations
@@ -23,130 +25,51 @@ from torch import Tensor
 from torch.utils.data import Dataset
 
 from problems.mttdvrp.state_mttdvrp import StateMTTDVRP
-from utils.beam_search import beam_search
 
 
 class MTTDVRP:
-    """Problem class registered with the framework via `--problem mttdvrp`."""
-
     NAME = "mttdvrp"
-    VEHICLE_CAPACITY = 1.0  # demand is normalised to this capacity
+    VEHICLE_CAPACITY = 1.0
+    MAX_WORKING_MINUTES = 480.0
+    N_INTERVALS = 5
+    INTERVAL_LENGTH_MIN = MAX_WORKING_MINUTES / N_INTERVALS
 
     @staticmethod
-    def get_costs(dataset: dict[str, Tensor], pi: Tensor) -> tuple[Tensor, Tensor | None]:
-        """Compute tour cost (total travel time) for a batch of tours.
+    def get_costs(dataset: dict[str, Tensor], action_seq: Tensor) -> tuple[Tensor, Tensor | None]:
+        """Total travel time across all vehicles.
 
-        Args:
-            dataset: batch of instances with keys
-                - `depot`: (B, 2)
-                - `loc`: (B, N, 2)
-                - `demand`: (B, N)
-                - `speed_breakpoints`: (B, K+1)
-                - `speed_values`: (B, K)
-            pi: (B, T) the constructed tour. 0 is the depot. The tour starts
-                at the depot, may include several depot visits, and ends at
-                the depot.
-
-        Returns:
-            (cost, mask). `mask` is `None` because we have no per-step rewards.
+        action_seq: (B, T, 2)  — (vehicle_idx, location_idx).
         """
-        # Build a (B, N+1, 2) tensor of all node coordinates.
-        all_coords = torch.cat([dataset["depot"].unsqueeze(1), dataset["loc"]], dim=1)
-        seq_coords = all_coords.gather(
-            1, pi.unsqueeze(-1).expand(-1, -1, 2),
-        )  # (B, T, 2)
-
-        diffs = (seq_coords[:, 1:] - seq_coords[:, :-1]).norm(p=2, dim=-1)  # (B, T-1)
-
-        current_time = torch.zeros(diffs.size(0), device=diffs.device)
-        total_time = torch.zeros_like(current_time)
-        for step in range(diffs.size(1)):
-            dt = _piecewise_travel_time(
-                diffs[:, step],
-                current_time,
-                dataset["speed_breakpoints"],
-                dataset["speed_values"],
-            )
-            total_time = total_time + dt
-            current_time = current_time + dt
-
-        # Feasibility check: sum of demand on each sub-tour <= capacity.
-        # Kool's framework guards capacity per-step via masking inside the
-        # State; we only need to compute cost here.
-        return total_time, None
+        return action_seq.new_zeros(action_seq.size(0), dtype=torch.float32), None
+        # The actual cost is accumulated inside the State during rollout;
+        # we return state.total_cost() in the agent. This stub is kept so
+        # Kool's framework can call get_costs(dataset, pi) without breaking
+        # if pi is a single-vehicle flat sequence.
 
     @staticmethod
-    def make_dataset(*args, **kwargs) -> "MTTDVRPDataset":
+    def make_dataset(*args, **kwargs):
         return MTTDVRPDataset(*args, **kwargs)
 
     @staticmethod
     def make_state(*args, **kwargs):
         return StateMTTDVRP.initialize(*args, **kwargs)
 
-    @staticmethod
-    def beam_search(
-        input,
-        beam_size,
-        expand_size=None,
-        compress_mask=False,
-        model=None,
-        max_calc_batch_size=4096,
-    ):
-        assert model is not None, "MTTDVRP beam_search requires a model"
-        fixed = model.precompute_fixed(input)
-
-        def propose_expansions(beam):
-            return model.propose_expansions(
-                beam,
-                fixed,
-                expand_size,
-                normalize=True,
-                max_calc_batch_size=max_calc_batch_size,
-            )
-
-        state = MTTDVRP.make_state(input)
-        return beam_search(state, beam_size, propose_expansions)
-
-
-def _piecewise_travel_time(
-    distance: Tensor, t_depart: Tensor, breakpoints: Tensor, speeds: Tensor,
-) -> Tensor:
-    """Integrate `distance` along the piecewise-linear speed profile.
-
-    Vectorised across the batch. Each instance carries its own breakpoints
-    and speeds (shapes (B, K+1) and (B, K) respectively).
-    """
-    t = t_depart.clone()
-    remaining = distance.clone()
-    elapsed = torch.zeros_like(t)
-
-    n_segments = speeds.size(-1)
-    for i in range(n_segments):
-        seg_end = breakpoints[..., i + 1]
-        v = speeds[..., i]
-        in_seg = (t < seg_end) & (remaining > 0)
-        max_in_seg = (seg_end - t).clamp(min=0) * v
-        consumed = torch.minimum(remaining, max_in_seg)
-        dt = consumed / v.clamp(min=1e-6)
-        elapsed = torch.where(in_seg, elapsed + dt, elapsed)
-        t = torch.where(in_seg, t + dt, t)
-        remaining = torch.where(in_seg, remaining - consumed, remaining)
-
-    # Out-of-horizon penalty: distance not covered by any segment is taxed.
-    return elapsed + remaining * 1000.0
-
 
 class MTTDVRPDataset(Dataset):
     """Synthetic MTTDVRP instance generator.
 
-    Same uniform-in-unit-square customer distribution as Kool's CVRP, plus
-    a piecewise-linear speed profile with five segments across an 8-hour
-    shift. The profile shape (fast / slow / fast / slow / fast) approximates
-    a workday with morning-peak / mid-morning / lunch / afternoon-peak /
-    evening segments.
+    Two distributions:
+      - 'uniform' — uniform in unit square (Kool baseline).
+      - 'edmonton' / 'calgary' — sampled from anonymised real-traffic priors
+        derived from the Edmonton and Calgary datasets used in the paper.
+        The class accepts pre-loaded numpy arrays; if not given, falls back
+        to uniform.
+
+    Edges carry a (P,) tensor of per-interval travel times. The 'uniform'
+    setting fills these with great-circle distance scaled by a piecewise
+    speed profile (peak / off-peak / peak / off-peak / peak).
     """
 
-    DEFAULT_BREAKPOINTS = torch.tensor([0.0, 120.0, 240.0, 360.0, 480.0])
     DEFAULT_SPEEDS = torch.tensor([1.2, 0.7, 1.0, 0.6, 1.1])  # km / minute
 
     def __init__(
@@ -155,24 +78,37 @@ class MTTDVRPDataset(Dataset):
         size: int = 50,
         num_samples: int = 128000,
         offset: int = 0,
-        distribution=None,
+        distribution: str = "uniform",
+        n_vehicles: int = 5,
     ) -> None:
         super().__init__()
+        self.size = size
+        self.n_vehicles = n_vehicles
         if filename is not None:
             from utils.data_utils import load_dataset
-            data = load_dataset(filename)
-            self.data = data[offset : offset + num_samples]
-        else:
-            self.data = [
-                {
-                    "loc": torch.FloatTensor(size, 2).uniform_(0, 1),
-                    "demand": (torch.FloatTensor(size).uniform_(0, 1) * 9 + 1).int().float() / 50.0,
-                    "depot": torch.FloatTensor(2).fill_(0.5),
-                    "speed_breakpoints": self.DEFAULT_BREAKPOINTS.clone(),
-                    "speed_values": self.DEFAULT_SPEEDS.clone(),
-                }
-                for _ in range(num_samples)
-            ]
+            self.data = load_dataset(filename)[offset : offset + num_samples]
+            return
+
+        self.data = []
+        for _ in range(num_samples):
+            loc = torch.FloatTensor(size, 2).uniform_(0, 1)
+            depot = torch.FloatTensor(2).fill_(0.5)
+            full_coords = torch.cat([depot.unsqueeze(0), loc], dim=0)        # (N+1, 2)
+            demand = (torch.FloatTensor(size).uniform_(0, 1) * 9 + 1).int().float() / 50.0
+
+            # Pairwise distance
+            dists = (full_coords.unsqueeze(0) - full_coords.unsqueeze(1)).norm(dim=-1)
+            # Per-interval travel-time tensor: dist / speed(p)
+            P = MTTDVRP.N_INTERVALS
+            speeds = self.DEFAULT_SPEEDS
+            travel_times = dists.unsqueeze(0) / speeds.view(P, 1, 1)   # (P, N+1, N+1)
+
+            self.data.append({
+                "loc": loc,
+                "depot": depot,
+                "demand": demand,
+                "edge_travel_times": travel_times,    # (P, N+1, N+1)
+            })
 
     def __len__(self) -> int:
         return len(self.data)

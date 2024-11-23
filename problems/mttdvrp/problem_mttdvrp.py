@@ -117,3 +117,5 @@ class MTTDVRPDataset(Dataset):
         return self.data[idx]
 
 # depot demand fix 2024-11-15
+
+# DEFAULT_SPEEDS extracted 2024-11-22

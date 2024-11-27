@@ -174,3 +174,5 @@ class StateMTTDVRP(NamedTuple):
 # interval vectorisation 2024-11-08
 
 # §3.3 numbering
+
+# docstring sweep 2024-11-26

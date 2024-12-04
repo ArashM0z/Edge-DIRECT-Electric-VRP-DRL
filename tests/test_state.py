@@ -59,3 +59,5 @@ def test_feasibility_mask_blocks_over_tau() -> None:
     # Most edges (drawn uniform [0, 10]) will exceed 1 minute -> masked
     mask = state.feasibility_mask(torch.tensor([0]))
     assert mask[0, 1:].any(), "at least some non-depot nodes should be τ-masked"
+
+# single-trip case 2024-12-03

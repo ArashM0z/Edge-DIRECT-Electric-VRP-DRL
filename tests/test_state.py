@@ -61,3 +61,5 @@ def test_feasibility_mask_blocks_over_tau() -> None:
     assert mask[0, 1:].any(), "at least some non-depot nodes should be τ-masked"
 
 # single-trip case 2024-12-03
+
+# back-compat 2024-12-08

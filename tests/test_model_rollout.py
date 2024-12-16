@@ -21,3 +21,5 @@ def test_full_rollout_terminates() -> None:
     assert cost.numel() == 1
     assert torch.isfinite(cost).all()
     assert actions.size(-1) == 2  # (vehicle, location) tuples
+
+# n_vehicles=1 fixture 2024-12-15

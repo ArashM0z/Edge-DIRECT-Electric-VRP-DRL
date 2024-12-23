@@ -38,3 +38,5 @@ def test_trip_decoder_respects_mask() -> None:
     mask[0, 3] = True
     logits = dec(node_emb, graph_emb, last, rc, tau, mask)
     assert torch.isinf(logits[0, 3]).all() and logits[0, 3].item() < 0
+
+# tolerance bump 2024-12-22

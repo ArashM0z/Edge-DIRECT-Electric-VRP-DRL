@@ -66,3 +66,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
   year={2019}
 }
 ```
+
+<!-- status 2024-12-29: model + tests stable -->

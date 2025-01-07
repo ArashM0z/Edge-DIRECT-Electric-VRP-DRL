@@ -83,3 +83,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
 
 <!-- TKDD DOI 2025-05-09 -->
 <!-- maint 2025-01-04 -->
+
+<!-- maint 2025-01-07 -->

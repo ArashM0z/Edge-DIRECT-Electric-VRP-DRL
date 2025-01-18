@@ -33,3 +33,5 @@ def test_trip_decoder_logits_finite_for_unmasked() -> None:
     logits = dec(node_emb, g, last, rc, tau, mask)
     feasible = ~mask
     assert torch.isfinite(logits[feasible]).all()
+
+# determinism 2025-01-17

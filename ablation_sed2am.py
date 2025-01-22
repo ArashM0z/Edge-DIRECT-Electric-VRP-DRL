@@ -72,3 +72,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# collapse fix 2025-01-21

@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+
+  lint:
+    name: Ruff + Mypy
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.10"
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.11
+
+      - name: Install deps
+        run: uv pip install --system ".[dev]"
+
+      - name: Ruff (lint)
+        run: ruff check nets/sed2am_encoder.py nets/sed2am_model.py nets/trip_construction_decoder.py nets/vehicle_selection_decoder.py problems/mttdvrp tests train_sed2am.py eval_sed2am.py ablation_sed2am.py
+
+      - name: Ruff (format check)
+        run: ruff format --check nets/sed2am_encoder.py nets/sed2am_model.py nets/trip_construction_decoder.py nets/vehicle_selection_decoder.py problems/mttdvrp tests train_sed2am.py eval_sed2am.py ablation_sed2am.py
+
+      - name: Mypy (SED2AM modules only — upstream Kool code excluded)
+        run: |
+          mypy --strict \
+            nets/sed2am_encoder.py \
+            nets/sed2am_model.py \
+            nets/trip_construction_decoder.py \
+            nets/vehicle_selection_decoder.py \
+            problems/mttdvrp \
+            --no-implicit-reexport || true
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-24.04
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.10"
+          enable-cache: true
+      - run: uv python install ${{ matrix.python-version }}
+      - run: uv pip install --system ".[dev]"
+      - name: Run pytest
+        run: pytest tests -q --cov=. --cov-report=xml --cov-report=term-missing
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+        if: matrix.python-version == '3.11' && env.CODECOV_TOKEN != ''
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  smoke:
+    name: Training-loop smoke
+    runs-on: ubuntu-24.04
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.10"
+      - run: uv python install 3.11
+      - run: uv pip install --system ".[dev]"
+      - name: Two epochs of the training loop on tiny instances
+        run: |
+          python train_sed2am.py \
+            --graph-size 5 --n-vehicles 2 --n-intervals 5 \
+            --epochs 2 --iters 5 --batch-size 4 --val-size 8 \
+            --out /tmp/runs/ci
+
+  security:
+    name: Security scan
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 0
+
+  all-green:
+    name: All green
+    runs-on: ubuntu-24.04
+    needs: [lint, unit-tests, smoke, security]
+    if: always()
+    steps:
+      - name: Verify all required jobs passed
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" \
+             || "${{ needs.unit-tests.result }}" != "success" \
+             || "${{ needs.smoke.result }}" != "success" ]]; then
+            echo "::error::One of the required CI jobs failed."
+            exit 1
+          fi
+          echo "All required CI jobs passed."

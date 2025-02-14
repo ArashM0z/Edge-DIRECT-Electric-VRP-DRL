@@ -68,3 +68,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
 ```
 
 <!-- status 2024-12-29: model + tests stable -->
+
+<!-- pre-submission sweep 2025-02-13 -->

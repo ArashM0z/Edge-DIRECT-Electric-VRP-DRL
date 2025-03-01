@@ -40,3 +40,5 @@ def test_per_interval_encoder_is_permutation_equivariant() -> None:
         out_a = enc(x, edges)
         out_b = enc(x[:, perm], edges[:, :, perm][:, :, :, perm])
     assert torch.allclose(out_a[:, :, perm], out_b, atol=1e-4)
+
+# 3.12 tolerance 2025-02-28

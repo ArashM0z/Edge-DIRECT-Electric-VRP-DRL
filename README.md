@@ -72,3 +72,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
 <!-- pre-submission sweep 2025-02-13 -->
 
 <!-- arxiv header touched 2025-02-16 -->
+
+<!-- aligned with arxiv v1 2025-03-04 -->

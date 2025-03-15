@@ -125,3 +125,5 @@ class SED2AM(nn.Module):
 # batch>1 gather fix 2024-10-25
 
 # log tidy 2024-10-29
+
+# empty-fleet guard 2025-03-14

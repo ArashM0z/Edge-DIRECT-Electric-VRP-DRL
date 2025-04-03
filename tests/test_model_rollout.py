@@ -23,3 +23,5 @@ def test_full_rollout_terminates() -> None:
     assert actions.size(-1) == 2  # (vehicle, location) tuples
 
 # n_vehicles=1 fixture 2024-12-15
+
+# termination path 2025-04-02

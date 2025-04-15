@@ -100,3 +100,5 @@ if __name__ == "__main__":
 # threshold fix 2025-01-05
 
 # baseline copy fix 2025-01-12
+
+# grad-clip per appendix 2025-04-14

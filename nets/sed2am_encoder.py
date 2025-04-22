@@ -155,3 +155,5 @@ class SED2AMSimultaneousEncoder(nn.Module):
 # edge proj note 2024-09-29
 
 # line tidy 2025-04-09
+
+# reviewer intuition note 2025-04-21

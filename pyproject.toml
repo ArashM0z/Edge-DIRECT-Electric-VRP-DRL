@@ -34,3 +34,5 @@ line-length = 100
 target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "B", "I", "UP", "SIM"]
+
+# dev deps bump 2025-04-26

@@ -76,3 +76,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
 <!-- aligned with arxiv v1 2025-03-04 -->
 
 <!-- reviewer 2 wording 2025-03-22 -->
+
+<!-- abstract-eq tightened 2025-05-02 -->

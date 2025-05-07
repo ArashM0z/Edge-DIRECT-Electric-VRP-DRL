@@ -78,3 +78,5 @@ python run.py --problem mttdvrp --graph_size 50 --baseline rollout --run_name se
 <!-- reviewer 2 wording 2025-03-22 -->
 
 <!-- abstract-eq tightened 2025-05-02 -->
+
+<!-- camera-ready typo sweep 2025-05-06 -->
